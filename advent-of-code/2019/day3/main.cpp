@@ -134,7 +134,8 @@ int main() {
 
     for (auto intersection : intersections) {
         part1_answer =
-            std::min(part1_answer, std::abs(intersection.first) + std::abs(intersection.second));
+            std::min(part1_answer, std::abs(intersection.first) +
+                                       std::abs(intersection.second));
     }
 
     std::cout << part1_answer << '\n';
