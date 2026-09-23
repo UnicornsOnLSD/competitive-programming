@@ -2,6 +2,7 @@
 // had I written it in Rust ;)
 
 #include <algorithm>
+#include <charconv>
 #include <format>
 #include <iostream>
 #include <iterator>
@@ -26,19 +27,29 @@ struct Vector {
     int magnitude;
 };
 
-// what a language
-struct PairHash {
-    size_t operator()(const std::pair<int, int> &p) const noexcept {
-        return std::hash<int>{}(p.first) ^ (std::hash<int>{}(p.second) << 1);
+struct Coordinate {
+    int x;
+    int y;
+    bool operator==(const Coordinate&) const = default;
+};
+
+template<>
+struct std::hash<Coordinate>
+{
+    std::size_t operator()(const Coordinate& coord) const noexcept
+    {
+        std::size_t h1 = std::hash<int>{}(coord.x);
+        std::size_t h2 = std::hash<int>{}(coord.y);
+        return h1 ^ (h2 << 1);
     }
 };
 
-std::unordered_set<std::pair<int, int>, PairHash>
+std::unordered_set<Coordinate>
 wire_path(std::vector<Vector> &wire) {
     int x = 0;
     int y = 0;
 
-    std::unordered_set<std::pair<int, int>, PairHash> out;
+    std::unordered_set<Coordinate> out;
 
     for (auto vector : wire) {
         for (int i = 0; i < vector.magnitude; i++) {
@@ -57,7 +68,7 @@ wire_path(std::vector<Vector> &wire) {
                 break;
             }
 
-            out.insert(std::pair(x, y));
+            out.insert({x, y});
         }
     }
 
@@ -109,7 +120,7 @@ int main() {
         wires.push_back(wire);
     }
 
-    std::vector<std::unordered_set<std::pair<int, int>, PairHash>> paths;
+    std::vector<std::unordered_set<Coordinate>> paths;
 
     for (auto wire : wires) {
         paths.push_back(wire_path(wire));
@@ -117,9 +128,9 @@ int main() {
 
     auto intersections = std::accumulate(
         std::next(paths.begin()), paths.end(), paths.front(),
-        [](std::unordered_set<std::pair<int, int>, PairHash> acc,
-           std::unordered_set<std::pair<int, int>, PairHash> &s) {
-            std::unordered_set<std::pair<int, int>, PairHash> out;
+        [](std::unordered_set<Coordinate> acc,
+           std::unordered_set<Coordinate> &s) {
+            std::unordered_set<Coordinate> out;
 
             for (const auto &point : acc) {
                 if (s.find(point) != s.end()) {
@@ -134,8 +145,8 @@ int main() {
 
     for (auto intersection : intersections) {
         part1_answer =
-            std::min(part1_answer, std::abs(intersection.first) +
-                                       std::abs(intersection.second));
+            std::min(part1_answer, std::abs(intersection.x) +
+                                       std::abs(intersection.y));
     }
 
     std::cout << part1_answer << '\n';
